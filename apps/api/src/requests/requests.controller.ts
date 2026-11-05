@@ -8,7 +8,12 @@ import {
   Query,
 } from '@nestjs/common';
 import { RequestsService } from './requests.service';
-import { ClassificationService, ClassifyRequestBody, ClassifyResponse } from './classification.service';
+import {
+  ClassificationHistory,
+  ClassificationService,
+  ClassifyRequestBody,
+  ClassifyResponse,
+} from './classification.service';
 import { RequestStatus } from './customer-request.entity';
 
 @Controller('requests')
@@ -24,11 +29,8 @@ export class RequestsController {
   }
 
   @Get('history')
-  history(@Query('category') _category?: string) {
-    return {
-      items: [],
-      message: 'Classification history is not implemented yet.',
-    };
+  history(@Query('category') category?: string): Promise<ClassificationHistory> {
+    return this.classificationService.history(category);
   }
 
   @Get(':id')

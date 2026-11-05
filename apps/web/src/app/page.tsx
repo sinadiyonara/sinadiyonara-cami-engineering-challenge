@@ -38,7 +38,11 @@ export default function HomePage() {
   const classifyMutation = useMutation({
     mutationFn: ({ id, message }: { id: string; message: string }) =>
       classifyMessage(message, id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['requests'] }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['requests'] }),
+        queryClient.invalidateQueries({ queryKey: ['history'] }),
+      ]),
   });
 
   if (requestsQuery.isLoading) {

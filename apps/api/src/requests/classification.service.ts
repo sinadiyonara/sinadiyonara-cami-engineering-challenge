@@ -1,6 +1,15 @@
-import { Injectable } from '@nestjs/common';
-import { ClassificationResult, KeywordClassifier } from './keyword-classifier';
+import { Inject, Injectable } from '@nestjs/common';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { ClassificationRecord } from './classification-record.entity';
+import {
+  CLASSIFIER_PROVIDER,
+  ClassificationResult,
+  ClassifierProvider,
+} from './classifier-provider';
 import { RequestsService } from './requests.service';
+
+const HISTORY_LIMIT = 100;
 
 export type ClassifyRequestBody = {
   message?: unknown;
@@ -11,11 +20,20 @@ export type ClassifyResponse =
   | (ClassificationResult & { requestId: string | null })
   | { error: string };
 
+export type ClassificationHistory = {
+  items: ClassificationRecord[];
+};
+
 @Injectable()
 export class ClassificationService {
   constructor(
     private readonly requestsService: RequestsService,
-    private readonly classifier: KeywordClassifier,
+    @Inject(CLASSIFIER_PROVIDER)
+    private readonly classifier: ClassifierProvider,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
+    @InjectRepository(ClassificationRecord)
+    private readonly records: Repository<ClassificationRecord>,
   ) {}
 
   async classify(body: ClassifyRequestBody): Promise<ClassifyResponse> {
@@ -29,7 +47,7 @@ export class ClassificationService {
     }
 
     const trimmed = message.trim();
-    let result = this.classifier.classify(trimmed);
+    let result = await this.classifier.classify(trimmed);
 
     // Soften confidence for very short messages.
     if (trimmed.split(/\s+/).length < 3 && result.category !== 'unknown') {
@@ -45,20 +63,45 @@ export class ClassificationService {
     }
 
     const requestId = body.requestId;
-    if (requestId) {
-      const existing = await this.requestsService.getById(requestId);
+    const existing = requestId ? await this.requestsService.getById(requestId) : null;
+    if (existing) {
       existing.category = result.category;
       existing.confidence = result.confidence;
       if (existing.status === 'open') {
         existing.status = 'in_progress';
       }
-      await this.requestsService.save(existing);
     }
+
+    // One transaction, so a request and its history cannot disagree.
+    await this.dataSource.transaction(async (manager) => {
+      if (existing) {
+        await manager.save(existing);
+      }
+      await manager.save(
+        manager.create(ClassificationRecord, {
+          requestId: requestId ?? null,
+          message: trimmed,
+          category: result.category,
+          confidence: result.confidence,
+          provider: this.classifier.name,
+        }),
+      );
+    });
 
     return {
       category: result.category,
       confidence: result.confidence,
       requestId: requestId ?? null,
     };
+  }
+
+  async history(category?: string): Promise<ClassificationHistory> {
+    const items = await this.records.find({
+      // A repeated query parameter arrives as an array, so only a single value filters.
+      where: category && typeof category === 'string' ? { category } : {},
+      order: { createdAt: 'DESC', id: 'DESC' },
+      take: HISTORY_LIMIT,
+    });
+    return { items };
   }
 }

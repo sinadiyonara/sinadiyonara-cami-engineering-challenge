@@ -1,0 +1,68 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: cami
+          POSTGRES_PASSWORD: cami
+          POSTGRES_DB: cami
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cami -d cami"
+          --health-interval 3s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgres://cami:cami@localhost:5432/cami
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      # Prefer a clean, reproducible install in CI.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check submission artifacts
+        run: |
+          test -f README.md
+          test -f AI_USAGE.md
+          test -f DECISIONS.md
+          test -d apps/api
+          test -d apps/web
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Migrate
+        env:
+          DATABASE_URL: postgres://cami:cami@localhost:5432/cami_app
+        run: npm run migration:run
+
+      - name: Build
+        run: npm run build

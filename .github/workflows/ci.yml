@@ -61,7 +61,7 @@ jobs:
 
       - name: Migrate
         env:
-          DATABASE_URL: postgres://cami:cami@localhost:5432/cami_app
+          DATABASE_URL: postgres://cami:cami@localhost:5432/cami
         run: npm run migration:run
 
       - name: Build

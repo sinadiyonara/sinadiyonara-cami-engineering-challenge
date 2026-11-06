@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
 import { ClassificationRecord } from './classification-record.entity';
+import { CLASSIFICATION_REPOSITORY, ClassificationRepository } from './classification-repository';
 import {
   CLASSIFIER_PROVIDER,
   ClassificationResult,
@@ -30,10 +29,8 @@ export class ClassificationService {
     private readonly requestsService: RequestsService,
     @Inject(CLASSIFIER_PROVIDER)
     private readonly classifier: ClassifierProvider,
-    @InjectDataSource()
-    private readonly dataSource: DataSource,
-    @InjectRepository(ClassificationRecord)
-    private readonly records: Repository<ClassificationRecord>,
+    @Inject(CLASSIFICATION_REPOSITORY)
+    private readonly classifications: ClassificationRepository,
   ) {}
 
   async classify(body: ClassifyRequestBody): Promise<ClassifyResponse> {
@@ -72,21 +69,16 @@ export class ClassificationService {
       }
     }
 
-    // One transaction, so a request and its history cannot disagree.
-    await this.dataSource.transaction(async (manager) => {
-      if (existing) {
-        await manager.save(existing);
-      }
-      await manager.save(
-        manager.create(ClassificationRecord, {
-          requestId: requestId ?? null,
-          message: trimmed,
-          category: result.category,
-          confidence: result.confidence,
-          provider: this.classifier.name,
-        }),
-      );
-    });
+    await this.classifications.save(
+      {
+        requestId: requestId ?? null,
+        message: trimmed,
+        category: result.category,
+        confidence: result.confidence,
+        provider: this.classifier.name,
+      },
+      existing,
+    );
 
     return {
       category: result.category,
@@ -96,12 +88,7 @@ export class ClassificationService {
   }
 
   async history(category?: string): Promise<ClassificationHistory> {
-    const items = await this.records.find({
-      // A repeated query parameter arrives as an array, so only a single value filters.
-      where: category && typeof category === 'string' ? { category } : {},
-      order: { createdAt: 'DESC', id: 'DESC' },
-      take: HISTORY_LIMIT,
-    });
+    const items = await this.classifications.findRecent({ category, limit: HISTORY_LIMIT });
     return { items };
   }
 }

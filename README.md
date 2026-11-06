@@ -53,6 +53,18 @@ One-shot full stack (API + web + DB in Docker) is also supported:
 docker compose up --build
 ```
 
+### Database UI (optional)
+
+pgAdmin is available as an opt-in service. It is not started by a plain `docker compose up`:
+
+```bash
+docker compose up pgadmin -d
+```
+
+Open http://localhost:5050 and log in with `dev@cami.dev` / `cami`, then register the server:
+host `db`, port `5432`, database `cami`, username and password `cami`. To analyse a query,
+open the Query Tool and press F7 for a graphical `EXPLAIN`.
+
 ## Your tasks
 
 ### Core (comparable bar)

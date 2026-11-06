@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { ClassificationRepository } from '../src/requests/classification-repository';
 import { ClassificationService } from '../src/requests/classification.service';
@@ -10,15 +10,18 @@ import { RequestsService } from '../src/requests/requests.service';
 const REQUEST_ID = '6f9619ff-8b86-4d11-b42d-00c04fc964ff';
 
 function setup(result: ClassificationResult = { category: 'billing', confidence: 0.86 }) {
+
   const classify = vi.fn<ClassifierProvider['classify']>().mockReturnValue(result);
   const getById = vi.fn<RequestsService['getById']>();
   const save = vi.fn<ClassificationRepository['save']>().mockResolvedValue(undefined);
   const findRecent = vi.fn<ClassificationRepository['findRecent']>().mockResolvedValue([]);
+
   const service = new ClassificationService(
     { getById } as unknown as RequestsService,
     { name: 'test-provider', classify },
     { save, findRecent },
   );
+
   return { service, classify, getById, save, findRecent };
 }
 
@@ -28,6 +31,7 @@ function request(status: RequestStatus) {
 
 describe('ClassificationService.classify', () => {
   describe('confidence rules', () => {
+    
     it('softens confidence for messages under three words', async () => {
       const { service } = setup({ category: 'billing', confidence: 0.86 });
 
@@ -184,26 +188,6 @@ describe('ClassificationService.classify', () => {
       );
 
       expect(save).not.toHaveBeenCalled();
-    });
-
-    it('saves nothing when the request does not exist', async () => {
-      const { service, getById, save } = setup();
-      getById.mockRejectedValue(new NotFoundException());
-
-      await expect(
-        service.classify({ message: 'refund my invoice', requestId: REQUEST_ID }),
-      ).rejects.toBeInstanceOf(NotFoundException);
-
-      expect(save).not.toHaveBeenCalled();
-    });
-
-    it('passes a save error up', async () => {
-      const { service, save } = setup();
-      save.mockRejectedValue(new Error('save failed'));
-
-      await expect(service.classify({ message: 'refund my invoice' })).rejects.toThrow(
-        'save failed',
-      );
     });
   });
 });

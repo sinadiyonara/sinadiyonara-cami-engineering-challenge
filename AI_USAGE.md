@@ -33,6 +33,4 @@ With the help of AI, I could make more changes than you actually ask for. But fo
 
 ## Team workflow (optional stretch)
 
-For me, AI changes how we write code, not who is responsible for it. The person who opens the PR
-should be able to explain every line. There is a longer list in
-[docs/stretch-notes.md](docs/stretch-notes.md).
+For me, AI changes how we write code, not who is responsible for it. The person who opens the PR should be able to explain every line.

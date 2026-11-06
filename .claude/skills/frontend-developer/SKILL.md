@@ -35,5 +35,6 @@ npm run build
 ## Rules
 
 - Do not create or edit `DECISIONS.md` or `AI_USAGE.md`. The user writes these.
+- Do not add new dependencies. If one seems necessary, ask the user first.
 - Commit or push only when asked.
 - Report real typecheck and test results before calling work done.

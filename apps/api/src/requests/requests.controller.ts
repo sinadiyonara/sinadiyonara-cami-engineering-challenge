@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -41,7 +42,7 @@ export class RequestsController {
   @Post()
   create(@Body() body: { message?: string }) {
     if (!body?.message || typeof body.message !== 'string') {
-      return { error: 'message is required' };
+      throw new BadRequestException('message is required');
     }
     return this.requestsService.create(body.message);
   }
@@ -49,7 +50,7 @@ export class RequestsController {
   @Patch(':id/status')
   updateStatus(@Param('id') id: string, @Body() body: { status?: RequestStatus }) {
     if (!body?.status) {
-      return { error: 'status is required' };
+      throw new BadRequestException('status is required');
     }
     return this.requestsService.updateStatus(id, body.status);
   }

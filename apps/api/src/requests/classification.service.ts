@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { ClassificationRecord } from './classification-record.entity';
 import { CLASSIFICATION_REPOSITORY, ClassificationRepository } from './classification-repository';
 import {
@@ -15,9 +15,7 @@ export type ClassifyRequestBody = {
   requestId?: string;
 };
 
-export type ClassifyResponse =
-  | (ClassificationResult & { requestId: string | null })
-  | { error: string };
+export type ClassifyResponse = ClassificationResult & { requestId: string | null };
 
 export type ClassificationHistory = {
   items: ClassificationRecord[];
@@ -36,11 +34,11 @@ export class ClassificationService {
   async classify(body: ClassifyRequestBody): Promise<ClassifyResponse> {
     const message = body?.message;
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
-      return { error: 'message must be a non-empty string' };
+      throw new BadRequestException('message must be a non-empty string');
     }
 
     if (message.length > 2000) {
-      return { error: 'message too long' };
+      throw new BadRequestException('message too long');
     }
 
     const trimmed = message.trim();

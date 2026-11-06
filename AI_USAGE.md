@@ -26,6 +26,7 @@ New packages: it added `class-validator` and `class-transformer` for the refacto
 
 pgAdmin: I configurted pgAdmin to make it easier to observe the db. its first version had saved servers, a password file, extra environment variables and a named volume. I cut it down to the small service now in `docker-compose.yml`.
 
+While moving the existing classification logic into a separate ClassificationService, AI also suggested some additional code improvements and refactoring. I decided not to include those changes in the commit because they were outside the scope and would make the commit history harder to follow.
 
 ## Trade-offs
 With the help of AI, I could make more changes than you actually ask for. But for this exercise, I wanted to focus on how I work with AI to get things done. So I kept the scope fixed and made only the changes that were really needed.

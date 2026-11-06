@@ -57,6 +57,8 @@ export class ClassificationService {
       result = { category: 'unknown', confidence: result.confidence };
     }
 
+    // One issue is that the classifier still runs before checking whether the request exists.
+    // It is not a concern with the current classifier, but it could cost money if we use an LLM later.
     const requestId = body.requestId;
     const existing = requestId ? await this.requestsService.getById(requestId) : null;
     if (existing) {

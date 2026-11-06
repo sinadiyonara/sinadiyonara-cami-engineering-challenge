@@ -12,7 +12,7 @@ import { ClassificationRecord } from './requests/classification-record.entity';
       url: process.env.DATABASE_URL ?? 'postgres://cami:cami@localhost:5432/cami',
       entities: [CustomerRequest, RequestNote, ClassificationRecord],
       synchronize: false,
-      logging: ['query'],
+      logging: ['error'],
     }),
     RequestsModule,
   ],

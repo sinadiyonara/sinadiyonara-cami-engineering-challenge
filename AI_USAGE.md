@@ -28,6 +28,8 @@ pgAdmin: I configurted pgAdmin to make it easier to observe the db. its first ve
 
 While moving the existing classification logic into a separate ClassificationService, AI also suggested some additional code improvements and refactoring. I decided not to include those changes in the commit because they were outside the scope and would make the commit history harder to follow.
 
+When writing the tests, AI initially suggested a long list of test cases covering many areas. I worked with it to focus more on catching edge cases and potential bugs rather than simply increasing the number of tests.
+
 ## Trade-offs
 With the help of AI, I could make more changes than you actually ask for. But for this exercise, I wanted to focus on how I work with AI to get things done. So I kept the scope fixed and made only the changes that were really needed.
 
